@@ -19,10 +19,6 @@ class WebSocketServer<Client:WebSocketServerClient> extends sys.net.ThreadSocket
 		run( host, port );
 	}
 
-	public function stop() {
-		throw 'stop thread server not implemented'; //TODO
-	}
-
 	override function clientConnected( s : Socket ) : Client {
 		return throw 'abstract method';
 	}

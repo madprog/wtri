@@ -38,7 +38,7 @@ class ThreadSocketServer<Client,Message> {
 	public var messageHeaderSize : Int;
 	public var updateTime : Float;
 	public var maxSockPerThread : Int;
-	//public var active : Bool;
+	public var active : Bool;
 
 	var threads : Array<ThreadInfos>;
 	var sock : Socket;
@@ -56,11 +56,11 @@ class ThreadSocketServer<Client,Message> {
 		maxBufferSize = (1 << 16);
 		maxSockPerThread = 64;
 		updateTime = 1;
-		//active = false;
+		active = false;
 	}
 
 	function runThread(t) {
-		while( true ) {
+		while( active ) {
 			try {
 				loopThread(t);
 			} catch( e : Dynamic ) {
@@ -112,7 +112,7 @@ class ThreadSocketServer<Client,Message> {
 					work(doClientDisconnected.bind(s,infos.client));
 				}
 			}
-		while( true ) {
+		while( active ) {
 			var m : { s : Socket, cnx : Bool } = Thread.readMessage(t.socks.length == 0);
 			if( m == null )
 				break;
@@ -131,7 +131,7 @@ class ThreadSocketServer<Client,Message> {
 	}
 
 	function runWorker() {
-		while( true ) {
+		while( active ) {
 			var f = Thread.readMessage(true);
 			try {
 				f();
@@ -185,13 +185,14 @@ class ThreadSocketServer<Client,Message> {
 
 	function runTimer() {
 		var l = new Lock();
-		while( true ) {
+		while( active ) {
 			l.wait( updateTime );
 			work( update );
 		}
 	}
 
 	function init() {
+		active = true;
 		worker = Thread.create(runWorker);
 		timer = Thread.create(runTimer);
 		for( i in 0...nthreads ) {
@@ -212,16 +213,30 @@ class ThreadSocketServer<Client,Message> {
 	}
 
 	public function run( host : String, port : Int ) {
+		var poll : Poll = new Poll(1);
+
 		sock = new Socket();
 		sock.bind( new sys.net.Host( host ), port );
+		sock.setBlocking( false );
 		sock.listen( listen );
 		init();
-		while( true ) {
+		while( active ) {
 			try {
-				addSocket( sock.accept() );
+				for (s in poll.poll( [ sock ], connectLag ) ) {
+					addSocket( s.accept() );
+				}
 			} catch( e : Dynamic ) {
 				logError(e);
 			}
+		}
+	}
+
+	public function stop() {
+		active = false;
+		worker.sendMessage(function() {});
+		// timer will halt itself soon
+		for( i in 0...nthreads ) {
+			threads[i].t.sendMessage(null);
 		}
 	}
 
