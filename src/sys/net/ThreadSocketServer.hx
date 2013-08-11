@@ -42,6 +42,7 @@ class ThreadSocketServer<Client,Message> {
 
 	var threads : Array<ThreadInfos>;
 	var sock : Socket;
+	var listener : Thread;
 	var worker : Thread;
 	var timer : Thread;
 
@@ -212,7 +213,15 @@ class ThreadSocketServer<Client,Message> {
 		work( addClient.bind( s ) );
 	}
 
-	public function run( host : String, port : Int ) {
+	public function run( host : String, port : Int, ?threaded : Bool ) {
+		if( threaded == null || !threaded ) {
+			runListener( host, port );
+		} else {
+			listener = Thread.create( runListener.bind( host, port ) );
+		}
+	}
+
+	private function runListener( host : String, port : Int ) {
 		var poll : Poll = new Poll(1);
 
 		sock = new Socket();
