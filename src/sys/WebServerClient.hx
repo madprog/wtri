@@ -25,6 +25,7 @@ typedef HTTPClientRequest = {
 	method : HTTPMethod,
 	//res : String,
 	?contentType : String,
+	?contentLength : Int,
 	?params : HTTPParams,
 	?data : String // post data
 }
@@ -121,7 +122,6 @@ class WebServerClient {
 		}
 
 		r.headers = new HTTPHeaders();
-		var data : String = null;
 		var exp_header = ~/([a-zA-Z-]+): (.+)/;
 		while( true ) {
 			line = i.readLine();
@@ -137,15 +137,17 @@ class WebServerClient {
 			}
 			*/
 			if( line.length == 0 ) {
-				if( r.method == post )
-					data = i.readLine(); 
+				var content_length = r.headers.get( 'content-length' );
+				if( r.method == post && content_length != null ) {
+					r.data = i.readString( Std.parseInt( content_length ) );
+				}
 				break;
 			}
 			if( !exp_header.match( line ) ) {
 				sendError( 400, 'Bad Request' ); //TODO explicit error
 				return null;
 			}
-			r.headers.set( exp_header.matched(1), exp_header.matched(2) );
+			r.headers.set( exp_header.matched(1).toLowerCase(), exp_header.matched(2) );
 		}
 
 		var i = r.url.indexOf( '?' );
