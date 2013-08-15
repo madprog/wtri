@@ -42,7 +42,6 @@ private typedef HTTPReturnCode = {
 
 class WebServerClient {
 
-	public var root : String;
 	public var mime : Map<String,String>;
 	//public var indexFileNames : Array<String>;
 	//public var indexFileTypes : Array<String>;
@@ -57,11 +56,10 @@ class WebServerClient {
 	var responseHeaders : HTTPHeaders;
 	//var websocketReady : Bool;
 
-	public function new( socket : Socket, root : String ) {
+	public function new( socket : Socket ) {
 
 		this.socket = socket;
 		this.out = socket.output;
-		this.root = root;
 
 		mime = [
 			'css' 	=> 'text/css',
@@ -167,44 +165,11 @@ class WebServerClient {
 	/**
 		Process HTTP request
 	*/
-	public function processRequest( r : HTTPClientRequest, ?customRoot : String ) {
-		
-		var path = if( customRoot != null ) customRoot else root;
-		path += r.url;
-
+	public function processRequest( r : HTTPClientRequest ) {
 		responseCode = { code : 200, text : "OK" };
 		responseHeaders = createResponseHeaders();
 
-		var filePath = findFile( path );
-		if( filePath == null ) {
-			fileNotFound( path, r.url );
-		} else {
-
-			var contentType : String = null;
-			if( r.headers.exists( 'Accept' ) ) {
-				var ctype =  r.headers.get('Accept');
-				ctype = ctype.substr( 0, ctype.indexOf(',') ).trim();
-				if( mime.has( ctype ) )
-					contentType = ctype;
-			}
-			if( contentType == null ) {
-				var ext = filePath.substr( filePath.lastIndexOf( '.' )+1 );
-				contentType = mime.exists( ext ) ? mime.get( ext ) : 'unknown/unknown';
-			}
-			responseHeaders.set( 'Content-Type', contentType );
-
-			/* TODO execute neko modules
-			if( r.url.endsWith('.n') ) {
-				var l = neko.vm.Loader.local();
-				var m = l.loadModule('ext.n',l );
-				trace(m);
-				//trace( m.execute() );
-				sendData("NEKO!");
-			}
-			*/
-
-			sendFile( path );
-		}
+		sendData( '' );
 	}
 
 	/**
@@ -212,25 +177,6 @@ class WebServerClient {
 	public function cleanup() {
 		//socket.close();
 	}
-
-	function findFile( path : String ) : String {
-		if( !FileSystem.exists( path ) )
-			return null;
-		//if( FileSystem.isDirectory( path ) )
-		//	return findIndexFile( path );
-		return path;
-	}
-
-	/*
-	function findIndexFile( path : String ) : String {
-		var r = new EReg( '('+indexFileNames.join( '|' )+').('+indexFileTypes.join( '|' )+')$', '' );
-		for( f in FileSystem.readDirectory( path) ) {
-			if( r.match( f ) )
-				return r.matched(1)+'.'+r.matched(2);
-		}
-		return null;
-	}
-	*/
 
 	function fileNotFound( path : String, url : String, ?content : String ) {
 		if( content == null ) content = '404 Not Found - /$url';

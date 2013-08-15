@@ -17,14 +17,14 @@ class WebServer extends sys.WebServer<Client> {
 
 	static inline var VERSION = '0.2';
 	static var HELP = 'Wtri Web Server $VERSION
-  Usage : wtri <host> <port> <path>
+  Usage : wtri <host> <port>
     help : Display this list of options';
 
 	public static var name = 'Haxe Development Server';
 	public static var verbose = true;
 
 	override function clientConnected( s : Socket ) : Client {
-		return new Client( s, path );
+		return new Client( s );
 	}
 
 	static inline function exit( ?m: String ) {
@@ -43,14 +43,12 @@ class WebServer extends sys.WebServer<Client> {
 		}
 		var host = 'localhost';
 		var port = 9990;
-		var path = Sys.getCwd();
 		if( args[0] != null ) host = args[0];
 		if( args[1] != null ) port = Std.parseInt( args[1] );
-		if( args[2] != null ) path = args[2];
 
-		var srv = new WebServer( host, port, path );
+		var srv = new WebServer( host, port );
 		//srv.clientMessage = function(c,m) {}
-		if( verbose ) Sys.println( 'Starting web server at $host:$port:$path' );
+		if( verbose ) Sys.println( 'Starting web server at $host:$port' );
 		try srv.start() catch(e:Dynamic) {
 			Sys.println( 'wtri error : $e' );
 		}
@@ -59,18 +57,11 @@ class WebServer extends sys.WebServer<Client> {
 
 private class Client extends sys.WebServerClient {
 
-	override function processRequest( r : HTTPClientRequest, ?customRoot : String ) {
+	override function processRequest( r : HTTPClientRequest ) {
 		//trace( "---------------------- processRequest "+r.url  );
-		super.processRequest( r, customRoot );
+		super.processRequest( r );
 		logHTTPRequest( r );
 	}
-
-	/*
-	override function fileNotFound( path : String, url : String, ?content : String ) {
-		//trace( "fileNotFound "+path+" : "+url);
-		super.fileNotFound( path, url, content );
-	}
-	*/
 
 	override function createResponseHeaders() : HTTPHeaders {
 		var h = super.createResponseHeaders();

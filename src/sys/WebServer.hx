@@ -16,20 +16,11 @@ class WebServer<Client:WebServerClient> extends sys.net.ThreadSocketServer<Clien
 
 	public var host(default,null) : String;
 	public var port(default,null) : Int;
-	public var path(default,null) : String;
 
-	public function new( host : String, port : Int,
-						 ?path : String ) {
-
-		if( path == null ) path = Sys.getCwd();
-		if( !StringTools.endsWith( path, "/" ) ) path += "/";
-		if( !FileSystem.exists( path ) ) throw 'Root path not found';
-		if( !FileSystem.isDirectory( path ) ) throw 'Root path must be a directory';
-
+	public function new( host : String, port : Int ) {
 		super();
 		this.host = host;
 		this.port = port;
-		this.path = path;
 	}
 
 	public function start() {
