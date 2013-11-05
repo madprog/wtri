@@ -1,0 +1,12 @@
+{
+	"name": "wtri",
+	"url": "https://github.com/madprog/wtri",
+	"license": "GPL",
+	"tags": ["embedded", "lightweight", "webserver"],
+	"description": "This library enables to listen HTTP requests on a TCP port and handle them with specific code",
+	"version": "1.0.0",
+	"releasenote": "Initial release, everything is working correctly",
+	"contributors": ["madprog"],
+	"dependencies": {
+	}
+}
